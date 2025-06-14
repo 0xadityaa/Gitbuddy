@@ -52,7 +52,7 @@ export const RepoDropdown = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch repositories');
+        throw new Error(`GitHub API error: ${response.status}`);
       }
 
       const repos = await response.json();
@@ -61,7 +61,7 @@ export const RepoDropdown = () => {
       console.error('Error fetching repositories:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch repositories from GitHub",
+        description: "Failed to fetch repositories from GitHub. Please try signing in again.",
         variant: "destructive",
       });
     } finally {
@@ -113,7 +113,7 @@ export const RepoDropdown = () => {
         <SelectContent>
           {repositories.map((repo) => (
             <SelectItem key={repo.id} value={repo.full_name}>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full">
                 <GitBranch className="h-4 w-4" />
                 <span className="font-medium">{repo.name}</span>
                 {repo.private ? (
@@ -123,7 +123,7 @@ export const RepoDropdown = () => {
                 )}
               </div>
               {repo.description && (
-                <div className="text-xs text-muted-foreground mt-1 truncate">
+                <div className="text-xs text-muted-foreground mt-1 truncate max-w-xs">
                   {repo.description}
                 </div>
               )}
