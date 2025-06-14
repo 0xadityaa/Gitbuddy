@@ -1,7 +1,8 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, Package, ArrowLeft, FileText } from "lucide-react";
+import { Copy, Package, ArrowLeft, FileText, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,8 +20,13 @@ interface ParsedDockerFiles {
 export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayProps) => {
   const [dockerFiles, setDockerFiles] = useState<string>("");
   const [parsedFiles, setParsedFiles] = useState<ParsedDockerFiles | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Automatically start Docker files generation when component mounts
+    generateDockerFiles();
+  }, [repoFullName]);
 
   const parseDockerFiles = (content: string): ParsedDockerFiles => {
     const dockerfileMatch = content.match(/```dockerfile\n([\s\S]*?)\n```/);
@@ -35,7 +41,6 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
   };
 
   const generateDockerFiles = async () => {
-    setLoading(true);
     try {
       const token = await getGitHubToken();
       if (!token) {
@@ -168,32 +173,47 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
     });
   };
 
-  return (
-    <div className="w-full max-w-6xl space-y-6">
-      <Card>
+  if (loading) {
+    return (
+      <Card className="w-full max-w-6xl">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Docker Files Generator (Powered by Gemini AI)
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Generating Docker Files with Gemini AI
           </CardTitle>
           <Button onClick={onBack} variant="outline" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
         </CardHeader>
-        <CardContent>
-          {!dockerFiles ? (
-            <div className="text-center py-8">
-              <Button onClick={generateDockerFiles} disabled={loading} className="gap-2">
-                <Package className="h-4 w-4" />
-                {loading ? "Generating Docker Files with Gemini AI..." : "Generate Docker Files with AI"}
-              </Button>
-              <p className="text-sm text-muted-foreground mt-2">
-                This will analyze all files in {repoFullName} and generate production-ready Dockerfile and docker-compose.yml using Google's Gemini AI
+        <CardContent className="space-y-6">
+          <div className="text-center py-8">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground">
+                Analyzing repository and generating production-ready Docker files using Google's Gemini AI...
               </p>
             </div>
-          ) : null}
+          </div>
         </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-6xl space-y-6">
+      {/* Header Card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Generated Docker Files
+          </CardTitle>
+          <Button onClick={onBack} variant="outline" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </CardHeader>
       </Card>
 
       {parsedFiles && (

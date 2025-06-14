@@ -1,7 +1,8 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, FileText, Hash, Folder, Download } from "lucide-react";
+import { Copy, FileText, Hash, Folder, Download, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DirectoryStructureProps {
@@ -43,52 +44,36 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
   const [metadata, setMetadata] = useState<RepoMetadata | null>(null);
   const [filesContent, setFilesContent] = useState<string>("");
   const [contentTokenCount, setContentTokenCount] = useState<number>(0);
-  const [loading, setLoading] = useState(false);
-  const [contentLoading, setContentLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchDirectoryStructure = async () => {
-    setLoading(true);
+  useEffect(() => {
+    // Automatically start the complete analysis when component mounts
+    performCompleteAnalysis();
+  }, [repoFullName]);
+
+  const performCompleteAnalysis = async () => {
     try {
       const token = await getGitHubToken();
       if (!token) {
         throw new Error("No GitHub token available");
       }
 
+      // Fetch all files and structure
       const allFiles = await fetchAllFiles(repoFullName, "", token);
       const structureText = generateDirectoryStructure(allFiles);
       const repoMetadata = await calculateRepoMetadata(allFiles, token);
       
       setStructure(structureText);
       setMetadata(repoMetadata);
-    } catch (error) {
-      console.error('Error fetching directory structure:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch directory structure",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const fetchAllFilesContent = async () => {
-    setContentLoading(true);
-    try {
-      const token = await getGitHubToken();
-      if (!token) {
-        throw new Error("No GitHub token available");
-      }
-
-      const allFiles = await fetchAllFiles(repoFullName, "", token);
+      // Immediately fetch all files content
       const fileItems = allFiles.filter(file => file.type === 'file');
       
       let contentText = `Repository: ${repoFullName}\n\n`;
       
       for (const file of fileItems) {
         try {
-          // Use GitHub API to fetch file content instead of raw URLs
           const response = await fetch(`https://api.github.com/repos/${repoFullName}/contents/${file.path}`, {
             headers: {
               'Authorization': `token ${token}`,
@@ -98,7 +83,6 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
           
           if (response.ok) {
             const fileData = await response.json();
-            // GitHub API returns content as base64 encoded
             let content = '';
             if (fileData.content) {
               try {
@@ -110,26 +94,14 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
               content = '[Empty file or could not decode content]';
             }
             
-            // Add file separator and content
             contentText += `================================================\n`;
             contentText += `FILE: ${file.path}\n`;
             contentText += `================================================\n`;
             contentText += content;
             contentText += `\n\n`;
-          } else {
-            // Add placeholder for failed files
-            contentText += `================================================\n`;
-            contentText += `FILE: ${file.path}\n`;
-            contentText += `================================================\n`;
-            contentText += `[Error: Could not fetch file content - ${response.status}]\n\n`;
           }
         } catch (error) {
           console.warn(`Could not fetch content for file: ${file.path}`, error);
-          // Add placeholder for failed files
-          contentText += `================================================\n`;
-          contentText += `FILE: ${file.path}\n`;
-          contentText += `================================================\n`;
-          contentText += `[Error: Could not fetch file content]\n\n`;
         }
       }
 
@@ -140,19 +112,19 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
       setContentTokenCount(tokens);
 
       toast({
-        title: "Success",
-        description: `Fetched content from ${fileItems.length} files`,
+        title: "Analysis Complete",
+        description: `Successfully analyzed ${fileItems.length} files and generated LLM ingest data`,
       });
       
     } catch (error) {
-      console.error('Error fetching files content:', error);
+      console.error('Error performing complete analysis:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch files content",
+        description: "Failed to analyze repository",
         variant: "destructive",
       });
     } finally {
-      setContentLoading(false);
+      setLoading(false);
     }
   };
 
@@ -268,119 +240,102 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
     return num.toLocaleString();
   };
 
+  if (loading) {
+    return (
+      <Card className="w-full max-w-6xl">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Analyzing Repository & Generating LLM Ingest
+          </CardTitle>
+          <Button onClick={onBack} variant="outline" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="text-center py-8">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground">
+                Analyzing repository structure and fetching all file contents...
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full max-w-6xl">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Repository Analysis</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          Repository Analysis Complete
+        </CardTitle>
         <div className="flex gap-2">
-          {structure && (
-            <Button onClick={() => copyToClipboard(structure, "Directory structure")} variant="outline" className="gap-2">
-              <Copy className="h-4 w-4" />
-              Copy Structure
-            </Button>
-          )}
-          <Button onClick={onBack} variant="outline">
+          <Button onClick={() => copyToClipboard(structure, "Directory structure")} variant="outline" className="gap-2">
+            <Copy className="h-4 w-4" />
+            Copy Structure
+          </Button>
+          <Button onClick={() => copyToClipboard(filesContent, "Complete LLM ingest")} variant="outline" className="gap-2">
+            <Copy className="h-4 w-4" />
+            Copy LLM Ingest
+          </Button>
+          <Button onClick={onBack} variant="outline" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {!structure ? (
-          <div className="text-center py-8">
-            <Button onClick={fetchDirectoryStructure} disabled={loading}>
-              {loading ? "Analyzing Repository..." : "Analyze Repository"}
-            </Button>
+        {/* Repository Metadata */}
+        {metadata && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
+            <div className="flex items-center gap-3">
+              <Folder className="h-5 w-5 text-blue-500" />
+              <div>
+                <div className="text-sm text-muted-foreground">Repository</div>
+                <div className="font-medium">{metadata.name}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-green-500" />
+              <div>
+                <div className="text-sm text-muted-foreground">Files Analyzed</div>
+                <div className="font-medium">{formatNumber(metadata.filesAnalyzed)}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Hash className="h-5 w-5 text-purple-500" />
+              <div>
+                <div className="text-sm text-muted-foreground">Total Tokens</div>
+                <div className="font-medium">{formatNumber(contentTokenCount)}</div>
+              </div>
+            </div>
           </div>
-        ) : (
-          <>
-            {/* Repository Metadata */}
-            {metadata && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Folder className="h-5 w-5 text-blue-500" />
-                  <div>
-                    <div className="text-sm text-muted-foreground">Repository</div>
-                    <div className="font-medium">{metadata.name}</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-green-500" />
-                  <div>
-                    <div className="text-sm text-muted-foreground">Files Analyzed</div>
-                    <div className="font-medium">{formatNumber(metadata.filesAnalyzed)}</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Hash className="h-5 w-5 text-purple-500" />
-                  <div>
-                    <div className="text-sm text-muted-foreground">Estimated Tokens</div>
-                    <div className="font-medium">{formatNumber(metadata.estimatedTokens)}</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Directory Structure */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Directory Structure</h3>
-              <div className="bg-muted p-4 rounded-lg">
-                <pre className="text-sm font-mono whitespace-pre-wrap overflow-auto max-h-96">
-                  {structure}
-                </pre>
-              </div>
-            </div>
-
-            {/* Files Content Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Files Content</h3>
-                <div className="flex gap-2">
-                  {!filesContent ? (
-                    <Button 
-                      onClick={fetchAllFilesContent} 
-                      disabled={contentLoading}
-                      className="gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      {contentLoading ? "Fetching Content..." : "Fetch All Files Content"}
-                    </Button>
-                  ) : (
-                    <Button 
-                      onClick={() => copyToClipboard(filesContent, "Files content")} 
-                      variant="outline" 
-                      className="gap-2"
-                    >
-                      <Copy className="h-4 w-4" />
-                      Copy
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {filesContent && (
-                <>
-                  {/* Content Token Count */}
-                  <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                    <Hash className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <div className="text-sm text-muted-foreground">Total Tokens (estimated)</div>
-                      <div className="font-medium text-blue-700 dark:text-blue-300">
-                        {formatNumber(contentTokenCount)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Content Display */}
-                  <div className="bg-muted p-4 rounded-lg">
-                    <pre className="text-sm font-mono whitespace-pre-wrap overflow-auto max-h-96 text-left">
-                      {filesContent}
-                    </pre>
-                  </div>
-                </>
-              )}
-            </div>
-          </>
         )}
+
+        {/* Directory Structure */}
+        <div>
+          <h3 className="text-lg font-semibold mb-3">Directory Structure</h3>
+          <div className="bg-muted p-4 rounded-lg">
+            <pre className="text-sm font-mono whitespace-pre-wrap overflow-auto max-h-96">
+              {structure}
+            </pre>
+          </div>
+        </div>
+
+        {/* Complete LLM Ingest Content */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Complete LLM Ingest Data</h3>
+          <div className="bg-muted p-4 rounded-lg">
+            <pre className="text-sm font-mono whitespace-pre-wrap overflow-auto max-h-96 text-left">
+              {filesContent}
+            </pre>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

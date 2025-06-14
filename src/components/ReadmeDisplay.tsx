@@ -1,8 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, FileText, ArrowLeft } from "lucide-react";
+import { Copy, FileText, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,11 +13,15 @@ interface ReadmeDisplayProps {
 
 export const ReadmeDisplay = ({ repoFullName, onBack }: ReadmeDisplayProps) => {
   const [readme, setReadme] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  useEffect(() => {
+    // Automatically start README generation when component mounts
+    generateReadme();
+  }, [repoFullName]);
+
   const generateReadme = async () => {
-    setLoading(true);
     try {
       const token = await getGitHubToken();
       if (!token) {
@@ -146,20 +150,45 @@ export const ReadmeDisplay = ({ repoFullName, onBack }: ReadmeDisplayProps) => {
     });
   };
 
+  if (loading) {
+    return (
+      <Card className="w-full max-w-6xl">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Generating README with Gemini AI
+          </CardTitle>
+          <Button onClick={onBack} variant="outline" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="text-center py-8">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground">
+                Analyzing repository and generating comprehensive README using Google's Gemini AI...
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full max-w-6xl">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          README Generator (Powered by Gemini AI)
+          Generated README.md
         </CardTitle>
         <div className="flex gap-2">
-          {readme && (
-            <Button onClick={copyToClipboard} variant="outline" className="gap-2">
-              <Copy className="h-4 w-4" />
-              Copy README
-            </Button>
-          )}
+          <Button onClick={copyToClipboard} variant="outline" className="gap-2">
+            <Copy className="h-4 w-4" />
+            Copy README
+          </Button>
           <Button onClick={onBack} variant="outline" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -167,28 +196,13 @@ export const ReadmeDisplay = ({ repoFullName, onBack }: ReadmeDisplayProps) => {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {!readme ? (
-          <div className="text-center py-8">
-            <Button onClick={generateReadme} disabled={loading} className="gap-2">
-              <FileText className="h-4 w-4" />
-              {loading ? "Generating README with Gemini AI..." : "Generate README with AI"}
-            </Button>
-            <p className="text-sm text-muted-foreground mt-2">
-              This will analyze all files in {repoFullName} and generate a comprehensive README using Google's Gemini AI
-            </p>
+        <div className="bg-muted p-4 rounded-lg">
+          <div className="bg-background p-4 rounded border max-h-96 overflow-auto">
+            <pre className="text-sm whitespace-pre-wrap font-mono">
+              {readme}
+            </pre>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="bg-muted p-4 rounded-lg">
-              <h3 className="text-lg font-semibold mb-3">Generated README.md</h3>
-              <div className="bg-background p-4 rounded border max-h-96 overflow-auto">
-                <pre className="text-sm whitespace-pre-wrap font-mono">
-                  {readme}
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
