@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy } from "lucide-react";
+import { Copy, FileText, Hash, Folder } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DirectoryStructureProps {
@@ -15,10 +15,18 @@ interface GitHubContent {
   path: string;
   type: 'file' | 'dir';
   download_url?: string;
+  size?: number;
+}
+
+interface RepoMetadata {
+  name: string;
+  filesAnalyzed: number;
+  estimatedTokens: number;
 }
 
 export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureProps) => {
   const [structure, setStructure] = useState<string>("");
+  const [metadata, setMetadata] = useState<RepoMetadata | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -32,7 +40,10 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
 
       const allFiles = await fetchAllFiles(repoFullName, "", token);
       const structureText = generateDirectoryStructure(allFiles);
+      const repoMetadata = await calculateRepoMetadata(allFiles, token);
+      
       setStructure(structureText);
+      setMetadata(repoMetadata);
     } catch (error) {
       console.error('Error fetching directory structure:', error);
       toast({
@@ -80,6 +91,44 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
     return allFiles;
   };
 
+  const calculateRepoMetadata = async (files: GitHubContent[], token: string): Promise<RepoMetadata> => {
+    const fileItems = files.filter(file => file.type === 'file');
+    let totalTokens = 0;
+
+    // Sample a few files to estimate token count (to avoid hitting API limits)
+    const sampleSize = Math.min(10, fileItems.length);
+    const sampleFiles = fileItems.slice(0, sampleSize);
+
+    for (const file of sampleFiles) {
+      if (file.download_url) {
+        try {
+          const response = await fetch(file.download_url, {
+            headers: {
+              'Authorization': `token ${token}`,
+            },
+          });
+          if (response.ok) {
+            const content = await response.text();
+            // Rough estimation: 1 token ≈ 4 characters
+            totalTokens += Math.ceil(content.length / 4);
+          }
+        } catch (error) {
+          console.warn(`Could not fetch content for file: ${file.path}`);
+        }
+      }
+    }
+
+    // Estimate total tokens based on sample
+    const avgTokensPerFile = sampleFiles.length > 0 ? totalTokens / sampleFiles.length : 0;
+    const estimatedTotalTokens = Math.round(avgTokensPerFile * fileItems.length);
+
+    return {
+      name: repoFullName.split('/')[1],
+      filesAnalyzed: fileItems.length,
+      estimatedTokens: estimatedTotalTokens,
+    };
+  };
+
   const generateDirectoryStructure = (files: GitHubContent[]): string => {
     const sortedFiles = files.sort((a, b) => {
       // Sort directories first, then files
@@ -110,15 +159,19 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
     });
   };
 
+  const formatNumber = (num: number) => {
+    return num.toLocaleString();
+  };
+
   return (
     <Card className="w-full max-w-4xl">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Directory Structure</CardTitle>
+        <CardTitle>Repository Analysis</CardTitle>
         <div className="flex gap-2">
           {structure && (
             <Button onClick={copyToClipboard} variant="outline" className="gap-2">
               <Copy className="h-4 w-4" />
-              Copy
+              Copy Structure
             </Button>
           )}
           <Button onClick={onBack} variant="outline">
@@ -126,19 +179,52 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         {!structure ? (
           <div className="text-center py-8">
             <Button onClick={fetchDirectoryStructure} disabled={loading}>
-              {loading ? "Fetching Directory Structure..." : "Fetch Directory Structure"}
+              {loading ? "Analyzing Repository..." : "Analyze Repository"}
             </Button>
           </div>
         ) : (
-          <div className="bg-muted p-4 rounded-lg">
-            <pre className="text-sm font-mono whitespace-pre-wrap overflow-auto max-h-96">
-              {structure}
-            </pre>
-          </div>
+          <>
+            {/* Repository Metadata */}
+            {metadata && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Folder className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <div className="text-sm text-muted-foreground">Repository</div>
+                    <div className="font-medium">{metadata.name}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <FileText className="h-5 w-5 text-green-500" />
+                  <div>
+                    <div className="text-sm text-muted-foreground">Files Analyzed</div>
+                    <div className="font-medium">{formatNumber(metadata.filesAnalyzed)}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Hash className="h-5 w-5 text-purple-500" />
+                  <div>
+                    <div className="text-sm text-muted-foreground">Estimated Tokens</div>
+                    <div className="font-medium">{formatNumber(metadata.estimatedTokens)}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Directory Structure */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Directory Structure</h3>
+              <div className="bg-muted p-4 rounded-lg">
+                <pre className="text-sm font-mono whitespace-pre-wrap overflow-auto max-h-96">
+                  {structure}
+                </pre>
+              </div>
+            </div>
+          </>
         )}
       </CardContent>
     </Card>
