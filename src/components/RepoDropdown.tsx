@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { GitBranch, Lock, Unlock } from "lucide-react";
+import { RepoActions } from "./RepoActions";
 
 interface Repository {
   id: number;
@@ -80,6 +81,11 @@ export const RepoDropdown = () => {
     }
   };
 
+  const handleAction = (actionType: string) => {
+    // Placeholder for action logic - will be implemented later
+    console.log(`Action ${actionType} triggered for repository: ${selectedRepo}`);
+  };
+
   if (loading) {
     return (
       <div className="w-full max-w-md">
@@ -105,32 +111,41 @@ export const RepoDropdown = () => {
   }
 
   return (
-    <div className="w-full max-w-md">
-      <Select value={selectedRepo} onValueChange={handleRepoSelect}>
-        <SelectTrigger>
-          <SelectValue placeholder="Select a repository" />
-        </SelectTrigger>
-        <SelectContent>
-          {repositories.map((repo) => (
-            <SelectItem key={repo.id} value={repo.full_name}>
-              <div className="flex items-center gap-2 w-full">
-                <GitBranch className="h-4 w-4" />
-                <span className="font-medium">{repo.name}</span>
-                {repo.private ? (
-                  <Lock className="h-3 w-3 text-muted-foreground" />
-                ) : (
-                  <Unlock className="h-3 w-3 text-muted-foreground" />
-                )}
-              </div>
-              {repo.description && (
-                <div className="text-xs text-muted-foreground mt-1 truncate max-w-xs">
-                  {repo.description}
+    <div className="space-y-6">
+      <div className="w-full max-w-md">
+        <Select value={selectedRepo} onValueChange={handleRepoSelect}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a repository" />
+          </SelectTrigger>
+          <SelectContent>
+            {repositories.map((repo) => (
+              <SelectItem key={repo.id} value={repo.full_name}>
+                <div className="flex items-center gap-2 w-full">
+                  <GitBranch className="h-4 w-4" />
+                  <span className="font-medium">{repo.name}</span>
+                  {repo.private ? (
+                    <Lock className="h-3 w-3 text-muted-foreground" />
+                  ) : (
+                    <Unlock className="h-3 w-3 text-muted-foreground" />
+                  )}
                 </div>
-              )}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+                {repo.description && (
+                  <div className="text-xs text-muted-foreground mt-1 truncate max-w-xs">
+                    {repo.description}
+                  </div>
+                )}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {selectedRepo && (
+        <RepoActions 
+          selectedRepo={selectedRepo} 
+          onAction={handleAction}
+        />
+      )}
     </div>
   );
 };
