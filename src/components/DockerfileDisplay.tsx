@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -175,33 +174,35 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
 
   if (loading) {
     return (
-      <Card className="w-full max-w-6xl">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Generating Docker Files with Gemini AI
-          </CardTitle>
-          <Button onClick={onBack} variant="outline" className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-center py-8">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-muted-foreground">
-                Analyzing repository and generating production-ready Docker files using Google's Gemini AI...
-              </p>
+      <div className="w-full max-w-7xl mx-auto">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Generating Docker Files with Gemini AI
+            </CardTitle>
+            <Button onClick={onBack} variant="outline" size="sm" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center py-8">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">
+                  Analyzing repository and generating production-ready Docker files using Google's Gemini AI...
+                </p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <div className="w-full max-w-6xl space-y-6">
+    <div className="w-full max-w-7xl mx-auto space-y-6">
       {/* Header Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -209,7 +210,7 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
             <Package className="h-5 w-5" />
             Generated Docker Files
           </CardTitle>
-          <Button onClick={onBack} variant="outline" className="gap-2">
+          <Button onClick={onBack} variant="outline" size="sm" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
@@ -229,6 +230,7 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
                 <Button 
                   onClick={() => copyToClipboard(parsedFiles.dockerfile, 'Dockerfile')} 
                   variant="outline" 
+                  size="sm"
                   className="gap-2"
                 >
                   <Copy className="h-4 w-4" />
@@ -258,6 +260,7 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
                 <Button 
                   onClick={() => copyToClipboard(parsedFiles.dockerCompose, 'docker-compose.yml')} 
                   variant="outline" 
+                  size="sm"
                   className="gap-2"
                 >
                   <Copy className="h-4 w-4" />
@@ -287,6 +290,7 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
                 <Button 
                   onClick={() => copyToClipboard(parsedFiles.envExample, '.env.example')} 
                   variant="outline" 
+                  size="sm"
                   className="gap-2"
                 >
                   <Copy className="h-4 w-4" />

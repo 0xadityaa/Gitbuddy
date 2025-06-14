@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, FileText, Hash, Folder, Download, ArrowLeft, Loader2 } from "lucide-react";
+import { Copy, FileText, Hash, Folder, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DirectoryStructureProps {
@@ -242,101 +241,125 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
 
   if (loading) {
     return (
-      <Card className="w-full max-w-6xl">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Analyzing Repository & Generating LLM Ingest
-          </CardTitle>
-          <Button onClick={onBack} variant="outline" className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-center py-8">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-muted-foreground">
-                Analyzing repository structure and fetching all file contents...
-              </p>
+      <div className="w-full max-w-7xl mx-auto">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Analyzing Repository & Generating LLM Ingest
+            </CardTitle>
+            <Button onClick={onBack} variant="outline" size="sm" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center py-8">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">
+                  Analyzing repository structure and fetching all file contents...
+                </p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full max-w-6xl">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          Repository Analysis Complete
-        </CardTitle>
-        <div className="flex gap-2">
-          <Button onClick={() => copyToClipboard(structure, "Directory structure")} variant="outline" className="gap-2">
-            <Copy className="h-4 w-4" />
-            Copy Structure
-          </Button>
-          <Button onClick={() => copyToClipboard(filesContent, "Complete LLM ingest")} variant="outline" className="gap-2">
-            <Copy className="h-4 w-4" />
-            Copy LLM Ingest
-          </Button>
-          <Button onClick={onBack} variant="outline" className="gap-2">
+    <div className="w-full max-w-7xl mx-auto space-y-6">
+      {/* Header Card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Repository Analysis Complete
+          </CardTitle>
+          <Button onClick={onBack} variant="outline" size="sm" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Repository Metadata */}
-        {metadata && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
-            <div className="flex items-center gap-3">
-              <Folder className="h-5 w-5 text-blue-500" />
-              <div>
-                <div className="text-sm text-muted-foreground">Repository</div>
-                <div className="font-medium">{metadata.name}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <FileText className="h-5 w-5 text-green-500" />
-              <div>
-                <div className="text-sm text-muted-foreground">Files Analyzed</div>
-                <div className="font-medium">{formatNumber(metadata.filesAnalyzed)}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Hash className="h-5 w-5 text-purple-500" />
-              <div>
-                <div className="text-sm text-muted-foreground">Total Tokens</div>
-                <div className="font-medium">{formatNumber(contentTokenCount)}</div>
-              </div>
-            </div>
-          </div>
-        )}
+        </CardHeader>
+      </Card>
 
-        {/* Directory Structure */}
-        <div>
-          <h3 className="text-lg font-semibold mb-3">Directory Structure</h3>
+      {/* Repository Metadata */}
+      {metadata && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex items-center gap-3">
+                <Folder className="h-5 w-5 text-blue-500" />
+                <div>
+                  <div className="text-sm text-muted-foreground">Repository</div>
+                  <div className="font-medium">{metadata.name}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-green-500" />
+                <div>
+                  <div className="text-sm text-muted-foreground">Files Analyzed</div>
+                  <div className="font-medium">{formatNumber(metadata.filesAnalyzed)}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Hash className="h-5 w-5 text-purple-500" />
+                <div>
+                  <div className="text-sm text-muted-foreground">Total Tokens</div>
+                  <div className="font-medium">{formatNumber(contentTokenCount)}</div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Directory Structure Card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg">Directory Structure</CardTitle>
+          <Button 
+            onClick={() => copyToClipboard(structure, "Directory structure")} 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+          >
+            <Copy className="h-4 w-4" />
+            Copy Structure
+          </Button>
+        </CardHeader>
+        <CardContent>
           <div className="bg-muted p-4 rounded-lg">
             <pre className="text-sm font-mono whitespace-pre-wrap overflow-auto max-h-96">
               {structure}
             </pre>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Complete LLM Ingest Content */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Complete LLM Ingest Data</h3>
+      {/* Complete LLM Ingest Content Card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg">Complete LLM Ingest Data</CardTitle>
+          <Button 
+            onClick={() => copyToClipboard(filesContent, "Complete LLM ingest")} 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+          >
+            <Copy className="h-4 w-4" />
+            Copy LLM Ingest
+          </Button>
+        </CardHeader>
+        <CardContent>
           <div className="bg-muted p-4 rounded-lg">
             <pre className="text-sm font-mono whitespace-pre-wrap overflow-auto max-h-96 text-left">
               {filesContent}
             </pre>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };

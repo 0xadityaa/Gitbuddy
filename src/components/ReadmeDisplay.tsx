@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -152,58 +151,60 @@ export const ReadmeDisplay = ({ repoFullName, onBack }: ReadmeDisplayProps) => {
 
   if (loading) {
     return (
-      <Card className="w-full max-w-6xl">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            Generating README with Gemini AI
-          </CardTitle>
-          <Button onClick={onBack} variant="outline" className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-center py-8">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-muted-foreground">
-                Analyzing repository and generating comprehensive README using Google's Gemini AI...
-              </p>
+      <div className="w-full max-w-7xl mx-auto">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Generating README with Gemini AI
+            </CardTitle>
+            <Button onClick={onBack} variant="outline" size="sm" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center py-8">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">
+                  Analyzing repository and generating comprehensive README using Google's Gemini AI...
+                </p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full max-w-6xl">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          Generated README.md
-        </CardTitle>
-        <div className="flex gap-2">
-          <Button onClick={copyToClipboard} variant="outline" className="gap-2">
-            <Copy className="h-4 w-4" />
-            Copy README
-          </Button>
-          <Button onClick={onBack} variant="outline" className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="bg-muted p-4 rounded-lg">
-          <div className="bg-background p-4 rounded border max-h-96 overflow-auto">
-            <pre className="text-sm whitespace-pre-wrap font-mono">
+    <div className="w-full max-w-7xl mx-auto">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Generated README.md
+          </CardTitle>
+          <div className="flex gap-2">
+            <Button onClick={copyToClipboard} variant="outline" size="sm" className="gap-2">
+              <Copy className="h-4 w-4" />
+              Copy README
+            </Button>
+            <Button onClick={onBack} variant="outline" size="sm" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="bg-muted p-6 rounded-lg">
+            <pre className="text-sm whitespace-pre-wrap font-mono overflow-auto max-h-[600px]">
               {readme}
             </pre>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
