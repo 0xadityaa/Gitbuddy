@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +15,7 @@ interface GitHubContent {
   type: 'file' | 'dir';
   download_url?: string;
   size?: number;
+  sha?: string;
 }
 
 interface RepoMetadata {
@@ -87,32 +87,49 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
       let contentText = `Repository: ${repoFullName}\n\n`;
       
       for (const file of fileItems) {
-        if (file.download_url) {
-          try {
-            const response = await fetch(file.download_url, {
-              headers: {
-                'Authorization': `token ${token}`,
-              },
-            });
-            
-            if (response.ok) {
-              const content = await response.text();
-              
-              // Add file separator and content
-              contentText += `================================================\n`;
-              contentText += `FILE: ${file.path}\n`;
-              contentText += `================================================\n`;
-              contentText += content;
-              contentText += `\n\n`;
+        try {
+          // Use GitHub API to fetch file content instead of raw URLs
+          const response = await fetch(`https://api.github.com/repos/${repoFullName}/contents/${file.path}`, {
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+            },
+          });
+          
+          if (response.ok) {
+            const fileData = await response.json();
+            // GitHub API returns content as base64 encoded
+            let content = '';
+            if (fileData.content) {
+              try {
+                content = atob(fileData.content.replace(/\n/g, ''));
+              } catch (decodeError) {
+                content = '[Binary file or encoding error]';
+              }
+            } else {
+              content = '[Empty file or could not decode content]';
             }
-          } catch (error) {
-            console.warn(`Could not fetch content for file: ${file.path}`, error);
+            
+            // Add file separator and content
+            contentText += `================================================\n`;
+            contentText += `FILE: ${file.path}\n`;
+            contentText += `================================================\n`;
+            contentText += content;
+            contentText += `\n\n`;
+          } else {
             // Add placeholder for failed files
             contentText += `================================================\n`;
             contentText += `FILE: ${file.path}\n`;
             contentText += `================================================\n`;
-            contentText += `[Error: Could not fetch file content]\n\n`;
+            contentText += `[Error: Could not fetch file content - ${response.status}]\n\n`;
           }
+        } catch (error) {
+          console.warn(`Could not fetch content for file: ${file.path}`, error);
+          // Add placeholder for failed files
+          contentText += `================================================\n`;
+          contentText += `FILE: ${file.path}\n`;
+          contentText += `================================================\n`;
+          contentText += `[Error: Could not fetch file content]\n\n`;
         }
       }
 
@@ -183,20 +200,26 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
     const sampleFiles = fileItems.slice(0, sampleSize);
 
     for (const file of sampleFiles) {
-      if (file.download_url) {
-        try {
-          const response = await fetch(file.download_url, {
-            headers: {
-              'Authorization': `token ${token}`,
-            },
-          });
-          if (response.ok) {
-            const content = await response.text();
-            totalTokens += estimateTokens(content);
+      try {
+        const response = await fetch(`https://api.github.com/repos/${repoFullName}/contents/${file.path}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+          },
+        });
+        if (response.ok) {
+          const fileData = await response.json();
+          if (fileData.content) {
+            try {
+              const content = atob(fileData.content.replace(/\n/g, ''));
+              totalTokens += estimateTokens(content);
+            } catch (decodeError) {
+              // Skip binary files or files that can't be decoded
+            }
           }
-        } catch (error) {
-          console.warn(`Could not fetch content for file: ${file.path}`);
         }
+      } catch (error) {
+        console.warn(`Could not fetch content for file: ${file.path}`);
       }
     }
 
