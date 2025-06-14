@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, Package, ArrowLeft } from "lucide-react";
+import { Copy, Package, ArrowLeft, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -11,10 +10,29 @@ interface DockerfileDisplayProps {
   onBack: () => void;
 }
 
+interface ParsedDockerFiles {
+  dockerfile: string;
+  dockerCompose: string;
+  envExample: string;
+}
+
 export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayProps) => {
   const [dockerFiles, setDockerFiles] = useState<string>("");
+  const [parsedFiles, setParsedFiles] = useState<ParsedDockerFiles | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const parseDockerFiles = (content: string): ParsedDockerFiles => {
+    const dockerfileMatch = content.match(/```dockerfile\n([\s\S]*?)\n```/);
+    const dockerComposeMatch = content.match(/```yaml\n([\s\S]*?)\n```/);
+    const envMatch = content.match(/```env\n([\s\S]*?)\n```/);
+
+    return {
+      dockerfile: dockerfileMatch ? dockerfileMatch[1].trim() : '',
+      dockerCompose: dockerComposeMatch ? dockerComposeMatch[1].trim() : '',
+      envExample: envMatch ? envMatch[1].trim() : ''
+    };
+  };
 
   const generateDockerFiles = async () => {
     setLoading(true);
@@ -66,6 +84,10 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
       // Generate Docker files using Gemini AI via Supabase Edge Function
       const generatedDockerFiles = await callGeminiForDockerFiles(repoContent, repoFullName);
       setDockerFiles(generatedDockerFiles);
+      
+      // Parse the generated files
+      const parsed = parseDockerFiles(generatedDockerFiles);
+      setParsedFiles(parsed);
 
       toast({
         title: "Success",
@@ -138,58 +160,132 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
     return data.generatedDockerFiles;
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(dockerFiles);
+  const copyToClipboard = (content: string, fileName: string) => {
+    navigator.clipboard.writeText(content);
     toast({
       title: "Copied!",
-      description: "Docker files copied to clipboard",
+      description: `${fileName} copied to clipboard`,
     });
   };
 
   return (
-    <Card className="w-full max-w-6xl">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Package className="h-5 w-5" />
-          Docker Files Generator (Powered by Gemini AI)
-        </CardTitle>
-        <div className="flex gap-2">
-          {dockerFiles && (
-            <Button onClick={copyToClipboard} variant="outline" className="gap-2">
-              <Copy className="h-4 w-4" />
-              Copy Docker Files
-            </Button>
-          )}
+    <div className="w-full max-w-6xl space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Docker Files Generator (Powered by Gemini AI)
+          </CardTitle>
           <Button onClick={onBack} variant="outline" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {!dockerFiles ? (
-          <div className="text-center py-8">
-            <Button onClick={generateDockerFiles} disabled={loading} className="gap-2">
-              <Package className="h-4 w-4" />
-              {loading ? "Generating Docker Files with Gemini AI..." : "Generate Docker Files with AI"}
-            </Button>
-            <p className="text-sm text-muted-foreground mt-2">
-              This will analyze all files in {repoFullName} and generate production-ready Dockerfile and docker-compose.yml using Google's Gemini AI
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="bg-muted p-4 rounded-lg">
-              <h3 className="text-lg font-semibold mb-3">Generated Docker Configuration</h3>
-              <div className="bg-background p-4 rounded border max-h-96 overflow-auto">
-                <pre className="text-sm whitespace-pre-wrap font-mono">
-                  {dockerFiles}
-                </pre>
-              </div>
+        </CardHeader>
+        <CardContent>
+          {!dockerFiles ? (
+            <div className="text-center py-8">
+              <Button onClick={generateDockerFiles} disabled={loading} className="gap-2">
+                <Package className="h-4 w-4" />
+                {loading ? "Generating Docker Files with Gemini AI..." : "Generate Docker Files with AI"}
+              </Button>
+              <p className="text-sm text-muted-foreground mt-2">
+                This will analyze all files in {repoFullName} and generate production-ready Dockerfile and docker-compose.yml using Google's Gemini AI
+              </p>
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      {parsedFiles && (
+        <div className="space-y-6">
+          {/* Dockerfile Card */}
+          {parsedFiles.dockerfile && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Dockerfile
+                </CardTitle>
+                <Button 
+                  onClick={() => copyToClipboard(parsedFiles.dockerfile, 'Dockerfile')} 
+                  variant="outline" 
+                  className="gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy Dockerfile
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-muted p-4 rounded-lg">
+                  <pre className="text-sm whitespace-pre-wrap font-mono overflow-auto max-h-96">
+                    <code className="language-dockerfile">
+                      {parsedFiles.dockerfile}
+                    </code>
+                  </pre>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Docker Compose Card */}
+          {parsedFiles.dockerCompose && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  docker-compose.yml
+                </CardTitle>
+                <Button 
+                  onClick={() => copyToClipboard(parsedFiles.dockerCompose, 'docker-compose.yml')} 
+                  variant="outline" 
+                  className="gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy docker-compose.yml
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-muted p-4 rounded-lg">
+                  <pre className="text-sm whitespace-pre-wrap font-mono overflow-auto max-h-96">
+                    <code className="language-yaml">
+                      {parsedFiles.dockerCompose}
+                    </code>
+                  </pre>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Environment Variables Card */}
+          {parsedFiles.envExample && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  .env.example
+                </CardTitle>
+                <Button 
+                  onClick={() => copyToClipboard(parsedFiles.envExample, '.env.example')} 
+                  variant="outline" 
+                  className="gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy .env.example
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-muted p-4 rounded-lg">
+                  <pre className="text-sm whitespace-pre-wrap font-mono overflow-auto max-h-96">
+                    <code className="language-bash">
+                      {parsedFiles.envExample}
+                    </code>
+                  </pre>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
