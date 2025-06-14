@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -12,6 +13,7 @@ import { GitBranch, Lock, Unlock } from "lucide-react";
 import { RepoActions } from "./RepoActions";
 import { DirectoryStructure } from "./DirectoryStructure";
 import { ReadmeDisplay } from "./ReadmeDisplay";
+import { DockerfileDisplay } from "./DockerfileDisplay";
 
 interface Repository {
   id: number;
@@ -26,7 +28,7 @@ export const RepoDropdown = () => {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRepo, setSelectedRepo] = useState<string>("");
-  const [currentView, setCurrentView] = useState<'actions' | 'llm-ingest' | 'generate-readme'>('actions');
+  const [currentView, setCurrentView] = useState<'actions' | 'llm-ingest' | 'generate-readme' | 'generate-dockerfile'>('actions');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -89,6 +91,8 @@ export const RepoDropdown = () => {
       setCurrentView('llm-ingest');
     } else if (actionType === 'generate-readme') {
       setCurrentView('generate-readme');
+    } else if (actionType === 'generate-dockerfile') {
+      setCurrentView('generate-dockerfile');
     } else {
       // Placeholder for other actions
       console.log(`Action ${actionType} triggered for repository: ${selectedRepo}`);
@@ -169,6 +173,12 @@ export const RepoDropdown = () => {
           )}
           {currentView === 'generate-readme' && (
             <ReadmeDisplay 
+              repoFullName={selectedRepo}
+              onBack={handleBackToActions}
+            />
+          )}
+          {currentView === 'generate-dockerfile' && (
+            <DockerfileDisplay 
               repoFullName={selectedRepo}
               onBack={handleBackToActions}
             />
