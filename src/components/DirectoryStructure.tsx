@@ -241,8 +241,8 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
 
   if (loading) {
     return (
-      <div className="w-full max-w-7xl mx-auto">
-        <Card>
+      <div className="w-full">
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -269,9 +269,9 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Header Card */}
-      <Card>
+      <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
@@ -286,7 +286,7 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
 
       {/* Repository Metadata */}
       {metadata && (
-        <Card>
+        <Card className="w-full">
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="flex items-center gap-3">
@@ -316,7 +316,7 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
       )}
 
       {/* Directory Structure Card */}
-      <Card>
+      <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg">Directory Structure</CardTitle>
           <Button 
@@ -329,9 +329,9 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
             Copy Structure
           </Button>
         </CardHeader>
-        <CardContent>
-          <div className="bg-muted p-4 rounded-lg">
-            <pre className="text-sm font-mono whitespace-pre-wrap overflow-auto max-h-96">
+        <CardContent className="w-full">
+          <div className="bg-muted p-4 rounded-lg w-full">
+            <pre className="text-sm font-mono whitespace-pre-wrap overflow-auto max-h-96 w-full">
               {structure}
             </pre>
           </div>
@@ -339,7 +339,7 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
       </Card>
 
       {/* Complete LLM Ingest Content Card */}
-      <Card>
+      <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg">Complete LLM Ingest Data</CardTitle>
           <Button 
@@ -352,9 +352,9 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
             Copy LLM Ingest
           </Button>
         </CardHeader>
-        <CardContent>
-          <div className="bg-muted p-4 rounded-lg">
-            <pre className="text-sm font-mono whitespace-pre-wrap overflow-auto max-h-96 text-left">
+        <CardContent className="w-full">
+          <div className="bg-muted p-4 rounded-lg w-full">
+            <pre className="text-sm font-mono whitespace-pre-wrap overflow-auto max-h-96 text-left w-full">
               {filesContent}
             </pre>
           </div>

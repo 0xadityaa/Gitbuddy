@@ -174,8 +174,8 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
 
   if (loading) {
     return (
-      <div className="w-full max-w-7xl mx-auto">
-        <Card>
+      <div className="w-full">
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -202,9 +202,9 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Header Card */}
-      <Card>
+      <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
@@ -218,10 +218,10 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
       </Card>
 
       {parsedFiles && (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
           {/* Dockerfile Card */}
           {parsedFiles.dockerfile && (
-            <Card>
+            <Card className="w-full">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
@@ -237,9 +237,9 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
                   Copy Dockerfile
                 </Button>
               </CardHeader>
-              <CardContent>
-                <div className="bg-muted p-4 rounded-lg">
-                  <pre className="text-sm whitespace-pre-wrap font-mono overflow-auto max-h-96">
+              <CardContent className="w-full">
+                <div className="bg-muted p-4 rounded-lg w-full">
+                  <pre className="text-sm whitespace-pre-wrap font-mono overflow-auto max-h-96 w-full">
                     <code className="language-dockerfile">
                       {parsedFiles.dockerfile}
                     </code>
@@ -251,7 +251,7 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
 
           {/* Docker Compose Card */}
           {parsedFiles.dockerCompose && (
-            <Card>
+            <Card className="w-full">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Package className="h-5 w-5" />
@@ -267,9 +267,9 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
                   Copy docker-compose.yml
                 </Button>
               </CardHeader>
-              <CardContent>
-                <div className="bg-muted p-4 rounded-lg">
-                  <pre className="text-sm whitespace-pre-wrap font-mono overflow-auto max-h-96">
+              <CardContent className="w-full">
+                <div className="bg-muted p-4 rounded-lg w-full">
+                  <pre className="text-sm whitespace-pre-wrap font-mono overflow-auto max-h-96 w-full">
                     <code className="language-yaml">
                       {parsedFiles.dockerCompose}
                     </code>
@@ -281,7 +281,7 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
 
           {/* Environment Variables Card */}
           {parsedFiles.envExample && (
-            <Card>
+            <Card className="w-full">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
@@ -297,9 +297,9 @@ export const DockerfileDisplay = ({ repoFullName, onBack }: DockerfileDisplayPro
                   Copy .env.example
                 </Button>
               </CardHeader>
-              <CardContent>
-                <div className="bg-muted p-4 rounded-lg">
-                  <pre className="text-sm whitespace-pre-wrap font-mono overflow-auto max-h-96">
+              <CardContent className="w-full">
+                <div className="bg-muted p-4 rounded-lg w-full">
+                  <pre className="text-sm whitespace-pre-wrap font-mono overflow-auto max-h-96 w-full">
                     <code className="language-bash">
                       {parsedFiles.envExample}
                     </code>

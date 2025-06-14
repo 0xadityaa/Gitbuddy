@@ -151,8 +151,8 @@ export const ReadmeDisplay = ({ repoFullName, onBack }: ReadmeDisplayProps) => {
 
   if (loading) {
     return (
-      <div className="w-full max-w-7xl mx-auto">
-        <Card>
+      <div className="w-full">
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -179,8 +179,8 @@ export const ReadmeDisplay = ({ repoFullName, onBack }: ReadmeDisplayProps) => {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto">
-      <Card>
+    <div className="w-full">
+      <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
@@ -197,9 +197,9 @@ export const ReadmeDisplay = ({ repoFullName, onBack }: ReadmeDisplayProps) => {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="bg-muted p-6 rounded-lg">
-            <pre className="text-sm whitespace-pre-wrap font-mono overflow-auto max-h-[600px]">
+        <CardContent className="space-y-6 w-full">
+          <div className="bg-muted p-6 rounded-lg w-full">
+            <pre className="text-sm whitespace-pre-wrap font-mono overflow-auto max-h-[600px] w-full">
               {readme}
             </pre>
           </div>
