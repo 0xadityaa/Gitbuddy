@@ -1,73 +1,87 @@
-# Welcome to your Lovable project
+## Overview
 
-## Project info
+This project is a React application built with Vite, TypeScript, and Shadcn UI, leveraging Tailwind CSS for styling.  It features a user interface for interacting with GitHub repositories, allowing users to analyze repository structure, fetch file contents, and generate READMEs and Dockerfiles using Google's Gemini AI via a Supabase Edge Function. Authentication is handled through GitHub OAuth using Supabase.
 
-**URL**: https://lovable.dev/projects/b8c444bd-b921-4743-b190-684cbb5ea3a0
 
-## How can I edit this code?
+## Setup
 
-There are several ways of editing your application.
+This project requires Node.js and npm (or yarn/pnpm) to be installed.  It's recommended to use [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) for managing Node.js versions.
 
-**Use Lovable**
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/0xadityaa/gitbuddy-dev
+   ```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/b8c444bd-b921-4743-b190-684cbb5ea3a0) and start prompting.
+2. **Navigate to the project directory:**
+   ```bash
+   cd gitbuddy-dev
+   ```
 
-Changes made via Lovable will be committed automatically to this repo.
+3. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-**Use your preferred IDE**
+4. **Configure Supabase:**  You'll need a Supabase project set up with a GitHub OAuth provider and the `generate-readme` and `generate-dockerfile` Edge Functions deployed.  The `supabase/config.toml` file contains placeholder values for your Supabase project URL and publishable key.  Replace these with your actual credentials.  Also ensure the `GEMINI_API_KEY` environment variable is set. See [Environment Configuration](#environment-configuration) for details.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+5. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
 
-Follow these steps:
+## Environment Configuration
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Create a `.env` file in the root of your project and populate it with the following:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```env
+SUPABASE_URL=https://YOUR_SUPABASE_PROJECT_URL  # Your Supabase project URL
+SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY  # Your Supabase publishable key
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY # Your Google Gemini API key
 ```
 
-**Edit a file directly in GitHub**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Features
 
-**Use GitHub Codespaces**
+- GitHub Authentication via OAuth.
+- Repository selection from authenticated user's GitHub account.
+- Repository directory structure visualization.
+- Fetching and display of file contents from selected repository.
+- README.md generation using Google's Gemini AI.
+- Dockerfile and docker-compose.yml generation using Google's Gemini AI.
+- Copy to clipboard functionality for generated content and directory structures.
+- Error handling and user feedback via toasts.
+- Responsive design using Tailwind CSS.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## What technologies are used for this project?
+## Tech Stack
 
-This project is built with:
+- **Frontend:** React, Vite, TypeScript, Shadcn UI, Tailwind CSS, React Router DOM, React Hook Form, TanStack Query
+- **Backend (Edge Functions):** Supabase, Google Gemini AI
+- **Styling:** Tailwind CSS
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
 
-## How can I deploy this project?
+## Usage
 
-Simply open [Lovable](https://lovable.dev/projects/b8c444bd-b921-4743-b190-684cbb5ea3a0) and click on Share -> Publish.
+1.  Sign in with your GitHub account.
+2.  Select a repository from the dropdown menu.
+3.  Click "Analyze Repository" to view the directory structure and estimated token count.
+4.  Click "Fetch All Files Content" to retrieve and display the content of all files.
+5.  Use the "Generate README" or "Generate Dockerfile" buttons to generate respective files using Gemini AI.
+6.  Copy the generated content to your clipboard.
 
-## Can I connect a custom domain to my Lovable project?
 
-Yes, you can!
+## Contributing
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+1.  Fork the repository.
+2.  Create a new branch for your feature or bug fix.
+3.  Make your changes.
+4.  Test your changes thoroughly.
+5.  Commit your changes with clear and concise commit messages.
+6.  Push your branch to your forked repository.
+7.  Create a pull request to merge your changes into the main branch.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## License
+
+MIT License.  See the `LICENSE` file for details.
