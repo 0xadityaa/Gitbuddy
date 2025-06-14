@@ -36,25 +36,32 @@ export const AuthButton = () => {
   const signInWithGithub = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          scopes: 'repo read:user',
-          redirectTo: `${window.location.origin}/`,
+          scopes: 'repo read:user user:email',
+          redirectTo: window.location.origin,
         },
       });
 
       if (error) {
+        console.error('GitHub OAuth error:', error);
         toast({
-          title: "Error",
-          description: error.message,
+          title: "Authentication Error",
+          description: error.message.includes('Provider not found') 
+            ? "GitHub authentication is not properly configured. Please check your Supabase settings."
+            : error.message,
           variant: "destructive",
         });
       }
-    } catch (error) {
+
+      // The redirect happens automatically if successful
+      // No need to handle data here as the user will be redirected
+    } catch (error: any) {
+      console.error('GitHub sign-in error:', error);
       toast({
-        title: "Error",
-        description: "Failed to sign in with GitHub",
+        title: "Connection Error",
+        description: "Unable to connect to GitHub. Please check your internet connection and try again.",
         variant: "destructive",
       });
     } finally {
@@ -98,7 +105,7 @@ export const AuthButton = () => {
   return (
     <Button onClick={signInWithGithub} disabled={loading} className="gap-2">
       <Github className="h-4 w-4" />
-      {loading ? "Signing in..." : "Sign in with GitHub"}
+      {loading ? "Connecting..." : "Sign in with GitHub"}
     </Button>
   );
 };
