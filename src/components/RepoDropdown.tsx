@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -11,6 +10,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { GitBranch, Lock, Unlock } from "lucide-react";
 import { RepoActions } from "./RepoActions";
+import { DirectoryStructure } from "./DirectoryStructure";
 
 interface Repository {
   id: number;
@@ -25,6 +25,7 @@ export const RepoDropdown = () => {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRepo, setSelectedRepo] = useState<string>("");
+  const [currentView, setCurrentView] = useState<'actions' | 'llm-ingest'>('actions');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export const RepoDropdown = () => {
 
   const handleRepoSelect = (repoFullName: string) => {
     setSelectedRepo(repoFullName);
+    setCurrentView('actions');
     const repo = repositories.find(r => r.full_name === repoFullName);
     if (repo) {
       toast({
@@ -82,8 +84,16 @@ export const RepoDropdown = () => {
   };
 
   const handleAction = (actionType: string) => {
-    // Placeholder for action logic - will be implemented later
-    console.log(`Action ${actionType} triggered for repository: ${selectedRepo}`);
+    if (actionType === 'llm-ingest') {
+      setCurrentView('llm-ingest');
+    } else {
+      // Placeholder for other actions
+      console.log(`Action ${actionType} triggered for repository: ${selectedRepo}`);
+    }
+  };
+
+  const handleBackToActions = () => {
+    setCurrentView('actions');
   };
 
   if (loading) {
@@ -141,10 +151,20 @@ export const RepoDropdown = () => {
       </div>
 
       {selectedRepo && (
-        <RepoActions 
-          selectedRepo={selectedRepo} 
-          onAction={handleAction}
-        />
+        <>
+          {currentView === 'actions' && (
+            <RepoActions 
+              selectedRepo={selectedRepo} 
+              onAction={handleAction}
+            />
+          )}
+          {currentView === 'llm-ingest' && (
+            <DirectoryStructure 
+              repoFullName={selectedRepo}
+              onBack={handleBackToActions}
+            />
+          )}
+        </>
       )}
     </div>
   );
