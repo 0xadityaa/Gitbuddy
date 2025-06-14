@@ -2,8 +2,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, FileText, Hash, Folder } from "lucide-react";
+import { Copy, FileText, Hash, Folder, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { get_encoding } from "tiktoken";
 
 interface DirectoryStructureProps {
   repoFullName: string;
@@ -27,7 +28,10 @@ interface RepoMetadata {
 export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureProps) => {
   const [structure, setStructure] = useState<string>("");
   const [metadata, setMetadata] = useState<RepoMetadata | null>(null);
+  const [filesContent, setFilesContent] = useState<string>("");
+  const [contentTokenCount, setContentTokenCount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
+  const [contentLoading, setContentLoading] = useState(false);
   const { toast } = useToast();
 
   const fetchDirectoryStructure = async () => {
@@ -53,6 +57,74 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllFilesContent = async () => {
+    setContentLoading(true);
+    try {
+      const token = await getGitHubToken();
+      if (!token) {
+        throw new Error("No GitHub token available");
+      }
+
+      const allFiles = await fetchAllFiles(repoFullName, "", token);
+      const fileItems = allFiles.filter(file => file.type === 'file');
+      
+      let contentText = `Repository: ${repoFullName}\n\n`;
+      
+      for (const file of fileItems) {
+        if (file.download_url) {
+          try {
+            const response = await fetch(file.download_url, {
+              headers: {
+                'Authorization': `token ${token}`,
+              },
+            });
+            
+            if (response.ok) {
+              const content = await response.text();
+              
+              // Add file separator and content
+              contentText += `================================================\n`;
+              contentText += `FILE: ${file.path}\n`;
+              contentText += `================================================\n`;
+              contentText += content;
+              contentText += `\n\n`;
+            }
+          } catch (error) {
+            console.warn(`Could not fetch content for file: ${file.path}`, error);
+            // Add placeholder for failed files
+            contentText += `================================================\n`;
+            contentText += `FILE: ${file.path}\n`;
+            contentText += `================================================\n`;
+            contentText += `[Error: Could not fetch file content]\n\n`;
+          }
+        }
+      }
+
+      setFilesContent(contentText);
+      
+      // Calculate tokens using tiktoken
+      const encoding = get_encoding("cl100k_base"); // GPT-4 encoding
+      const tokens = encoding.encode(contentText);
+      setContentTokenCount(tokens.length);
+      encoding.free(); // Clean up the encoding
+
+      toast({
+        title: "Success",
+        description: `Fetched content from ${fileItems.length} files`,
+      });
+      
+    } catch (error) {
+      console.error('Error fetching files content:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch files content",
+        variant: "destructive",
+      });
+    } finally {
+      setContentLoading(false);
     }
   };
 
@@ -151,11 +223,11 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
     return structure;
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(structure);
+  const copyToClipboard = (content: string, type: string) => {
+    navigator.clipboard.writeText(content);
     toast({
       title: "Copied!",
-      description: "Directory structure copied to clipboard",
+      description: `${type} copied to clipboard`,
     });
   };
 
@@ -164,12 +236,12 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
   };
 
   return (
-    <Card className="w-full max-w-4xl">
+    <Card className="w-full max-w-6xl">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Repository Analysis</CardTitle>
         <div className="flex gap-2">
           {structure && (
-            <Button onClick={copyToClipboard} variant="outline" className="gap-2">
+            <Button onClick={() => copyToClipboard(structure, "Directory structure")} variant="outline" className="gap-2">
               <Copy className="h-4 w-4" />
               Copy Structure
             </Button>
@@ -223,6 +295,56 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
                   {structure}
                 </pre>
               </div>
+            </div>
+
+            {/* Files Content Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Files Content</h3>
+                <div className="flex gap-2">
+                  {!filesContent ? (
+                    <Button 
+                      onClick={fetchAllFilesContent} 
+                      disabled={contentLoading}
+                      className="gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      {contentLoading ? "Fetching Content..." : "Fetch All Files Content"}
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={() => copyToClipboard(filesContent, "Files content")} 
+                      variant="outline" 
+                      className="gap-2"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {filesContent && (
+                <>
+                  {/* Content Token Count */}
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                    <Hash className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <div className="text-sm text-muted-foreground">Total Tokens (tiktoken)</div>
+                      <div className="font-medium text-blue-700 dark:text-blue-300">
+                        {formatNumber(contentTokenCount)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Content Display */}
+                  <div className="bg-muted p-4 rounded-lg">
+                    <pre className="text-sm font-mono whitespace-pre-wrap overflow-auto max-h-96 text-left">
+                      {filesContent}
+                    </pre>
+                  </div>
+                </>
+              )}
             </div>
           </>
         )}
