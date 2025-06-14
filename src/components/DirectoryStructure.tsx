@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Copy, FileText, Hash, Folder, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { get_encoding } from "tiktoken";
 
 interface DirectoryStructureProps {
   repoFullName: string;
@@ -24,6 +23,20 @@ interface RepoMetadata {
   filesAnalyzed: number;
   estimatedTokens: number;
 }
+
+// Simple token estimation function (approximates GPT-4 tokenization)
+const estimateTokens = (text: string): number => {
+  // Rough estimation: 1 token ≈ 0.75 words or 4 characters
+  // This is a simplified approximation
+  const words = text.split(/\s+/).length;
+  const characters = text.length;
+  
+  // Use the higher of word-based or character-based estimation
+  const wordBasedTokens = Math.ceil(words * 1.3);
+  const charBasedTokens = Math.ceil(characters / 4);
+  
+  return Math.max(wordBasedTokens, charBasedTokens);
+};
 
 export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureProps) => {
   const [structure, setStructure] = useState<string>("");
@@ -105,11 +118,9 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
 
       setFilesContent(contentText);
       
-      // Calculate tokens using tiktoken
-      const encoding = get_encoding("cl100k_base"); // GPT-4 encoding
-      const tokens = encoding.encode(contentText);
-      setContentTokenCount(tokens.length);
-      encoding.free(); // Clean up the encoding
+      // Calculate tokens using our simple estimation function
+      const tokens = estimateTokens(contentText);
+      setContentTokenCount(tokens);
 
       toast({
         title: "Success",
@@ -181,8 +192,7 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
           });
           if (response.ok) {
             const content = await response.text();
-            // Rough estimation: 1 token ≈ 4 characters
-            totalTokens += Math.ceil(content.length / 4);
+            totalTokens += estimateTokens(content);
           }
         } catch (error) {
           console.warn(`Could not fetch content for file: ${file.path}`);
@@ -330,7 +340,7 @@ export const DirectoryStructure = ({ repoFullName, onBack }: DirectoryStructureP
                   <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
                     <Hash className="h-5 w-5 text-blue-500" />
                     <div>
-                      <div className="text-sm text-muted-foreground">Total Tokens (tiktoken)</div>
+                      <div className="text-sm text-muted-foreground">Total Tokens (estimated)</div>
                       <div className="font-medium text-blue-700 dark:text-blue-300">
                         {formatNumber(contentTokenCount)}
                       </div>
