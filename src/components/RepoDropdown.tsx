@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { GitBranch, Lock, Unlock } from "lucide-react";
 import { RepoActions } from "./RepoActions";
 import { DirectoryStructure } from "./DirectoryStructure";
+import { ReadmeDisplay } from "./ReadmeDisplay";
 
 interface Repository {
   id: number;
@@ -25,7 +26,7 @@ export const RepoDropdown = () => {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRepo, setSelectedRepo] = useState<string>("");
-  const [currentView, setCurrentView] = useState<'actions' | 'llm-ingest'>('actions');
+  const [currentView, setCurrentView] = useState<'actions' | 'llm-ingest' | 'generate-readme'>('actions');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -86,6 +87,8 @@ export const RepoDropdown = () => {
   const handleAction = (actionType: string) => {
     if (actionType === 'llm-ingest') {
       setCurrentView('llm-ingest');
+    } else if (actionType === 'generate-readme') {
+      setCurrentView('generate-readme');
     } else {
       // Placeholder for other actions
       console.log(`Action ${actionType} triggered for repository: ${selectedRepo}`);
@@ -160,6 +163,12 @@ export const RepoDropdown = () => {
           )}
           {currentView === 'llm-ingest' && (
             <DirectoryStructure 
+              repoFullName={selectedRepo}
+              onBack={handleBackToActions}
+            />
+          )}
+          {currentView === 'generate-readme' && (
+            <ReadmeDisplay 
               repoFullName={selectedRepo}
               onBack={handleBackToActions}
             />
