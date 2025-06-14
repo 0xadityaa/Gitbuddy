@@ -26,6 +26,8 @@ serve(async (req) => {
       throw new Error('Missing required fields: repoContent and repoName');
     }
 
+    console.log(`Generating README for ${repoName}, content length: ${repoContent.length} characters`);
+
     const prompt = `Analyze the following repository content and generate a comprehensive README.md file in GitHub flavored markdown syntax.
 
 Repository: ${repoName}
@@ -63,32 +65,59 @@ ${repoContent}
 
 Please generate a professional, well-structured README.md that would be helpful for developers wanting to understand and contribute to this project. Focus on being accurate based on the actual code provided.`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192,
-        }
-      }),
-    });
+    // Make a single API call to Gemini with retry logic for rate limiting
+    let response;
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+    while (attempts < maxAttempts) {
+      try {
+        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt
+                  }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 8192,
+            }
+          }),
+        });
+
+        if (response.status === 429) {
+          attempts++;
+          if (attempts < maxAttempts) {
+            console.log(`Rate limited, waiting before retry ${attempts}/${maxAttempts}`);
+            await new Promise(resolve => setTimeout(resolve, 2000 * attempts)); // Exponential backoff
+            continue;
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+        }
+
+        break; // Success, exit retry loop
+      } catch (error) {
+        attempts++;
+        if (attempts >= maxAttempts) {
+          throw error;
+        }
+        console.log(`API call failed, retrying ${attempts}/${maxAttempts}:`, error.message);
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+      }
     }
 
     const data = await response.json();
@@ -99,13 +128,22 @@ Please generate a professional, well-structured README.md that would be helpful 
 
     const generatedReadme = data.candidates[0].content.parts[0].text;
 
+    console.log(`Successfully generated README for ${repoName}`);
+
     return new Response(JSON.stringify({ generatedReadme }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in generate-readme function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+    
+    // Provide more specific error messages for rate limiting
+    let errorMessage = error.message;
+    if (error.message.includes('429') || error.message.includes('Too Many Requests')) {
+      errorMessage = 'Rate limit exceeded. Please wait a moment and try again.';
+    }
+    
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: error.message.includes('429') ? 429 : 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
