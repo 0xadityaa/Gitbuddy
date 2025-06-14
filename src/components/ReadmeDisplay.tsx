@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Copy, FileText, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ReadmeDisplayProps {
   repoFullName: string;
@@ -62,13 +63,13 @@ export const ReadmeDisplay = ({ repoFullName, onBack }: ReadmeDisplayProps) => {
         }
       }
 
-      // Generate README using AI
-      const generatedReadme = await callAIForReadme(repoContent, repoFullName);
+      // Generate README using Gemini AI via Supabase Edge Function
+      const generatedReadme = await callGeminiForReadme(repoContent, repoFullName);
       setReadme(generatedReadme);
 
       toast({
         title: "Success",
-        description: "README generated successfully!",
+        description: "README generated successfully using Gemini AI!",
       });
       
     } catch (error) {
@@ -84,7 +85,7 @@ export const ReadmeDisplay = ({ repoFullName, onBack }: ReadmeDisplayProps) => {
   };
 
   const getGitHubToken = async () => {
-    const { data: { session } } = await import("@/integrations/supabase/client").then(m => m.supabase.auth.getSession());
+    const { data: { session } } = await supabase.auth.getSession();
     return session?.provider_token;
   };
 
@@ -118,128 +119,23 @@ export const ReadmeDisplay = ({ repoFullName, onBack }: ReadmeDisplayProps) => {
     return allFiles;
   };
 
-  const callAIForReadme = async (repoContent: string, repoName: string): Promise<string> => {
-    const prompt = `Analyze the following repository content and generate a comprehensive README.md file in GitHub flavored markdown syntax.
+  const callGeminiForReadme = async (repoContent: string, repoName: string): Promise<string> => {
+    const { data, error } = await supabase.functions.invoke('generate-readme', {
+      body: {
+        repoContent,
+        repoName,
+      },
+    });
 
-Repository: ${repoName}
+    if (error) {
+      throw new Error(`Supabase function error: ${error.message}`);
+    }
 
-The README should have the following structure:
+    if (!data || !data.generatedReadme) {
+      throw new Error('No README content received from AI');
+    }
 
-1. # Project Name (extract from repository name or package.json)
-
-2. ## Overview
-   A short, to-the-point description about the repository/project based on the code analysis.
-
-3. ## Setup
-   Detailed instructions about setting up the repository by analyzing the tech stack used and how to run it locally. Include installation steps, dependencies, and build commands.
-
-4. ## Environment Configuration
-   If any APIs or environment configurations are needed, provide a .env template with placeholder values and descriptions.
-
-5. ## Features
-   List all available project features in an ordered list format based on code analysis.
-
-6. ## Tech Stack
-   List the technologies, frameworks, and libraries used in the project.
-
-7. ## Usage
-   Basic usage instructions if applicable.
-
-Repository Content:
-${repoContent}
-
-Please generate a professional, well-structured README.md that would be helpful for developers wanting to understand and contribute to this project.`;
-
-    // This is a placeholder for AI integration - in a real implementation, 
-    // you would call an AI service like OpenAI GPT-4
-    // For now, return a structured template
-    const projectName = repoName.split('/')[1];
-    
-    return `# ${projectName}
-
-## Overview
-This project appears to be a modern web application built with React and TypeScript. Based on the codebase analysis, it includes authentication, data visualization, and user interface components.
-
-## Setup
-
-### Prerequisites
-- Node.js (v14 or higher)
-- npm or yarn package manager
-
-### Installation
-1. Clone the repository:
-   \`\`\`bash
-   git clone https://github.com/${repoName}.git
-   cd ${projectName}
-   \`\`\`
-
-2. Install dependencies:
-   \`\`\`bash
-   npm install
-   \`\`\`
-
-3. Start the development server:
-   \`\`\`bash
-   npm run dev
-   \`\`\`
-
-4. Open your browser and navigate to \`http://localhost:3000\`
-
-## Environment Configuration
-
-Create a \`.env\` file in the root directory with the following variables:
-
-\`\`\`env
-# Supabase Configuration
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# GitHub Integration (if applicable)
-VITE_GITHUB_CLIENT_ID=your_github_client_id
-
-# Other API keys (add as needed)
-VITE_API_KEY=your_api_key
-\`\`\`
-
-## Features
-
-1. User authentication and authorization
-2. Repository management and analysis
-3. Real-time data synchronization
-4. Responsive user interface
-5. GitHub integration
-6. File content analysis
-7. Interactive data visualization
-
-## Tech Stack
-
-- **Frontend**: React, TypeScript, Vite
-- **Styling**: Tailwind CSS, shadcn/ui
-- **State Management**: React Query (TanStack Query)
-- **Backend**: Supabase
-- **Authentication**: Supabase Auth
-- **Icons**: Lucide React
-- **Routing**: React Router DOM
-
-## Usage
-
-After setting up the project locally, you can:
-
-1. Sign in with your GitHub account
-2. Select repositories for analysis
-3. Generate documentation and insights
-4. Manage your projects through the dashboard
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.`;
+    return data.generatedReadme;
   };
 
   const copyToClipboard = () => {
@@ -255,7 +151,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          README Generator
+          README Generator (Powered by Gemini AI)
         </CardTitle>
         <div className="flex gap-2">
           {readme && (
@@ -275,10 +171,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
           <div className="text-center py-8">
             <Button onClick={generateReadme} disabled={loading} className="gap-2">
               <FileText className="h-4 w-4" />
-              {loading ? "Generating README..." : "Generate README"}
+              {loading ? "Generating README with Gemini AI..." : "Generate README with AI"}
             </Button>
             <p className="text-sm text-muted-foreground mt-2">
-              This will analyze all files in {repoFullName} and generate a comprehensive README
+              This will analyze all files in {repoFullName} and generate a comprehensive README using Google's Gemini AI
             </p>
           </div>
         ) : (
