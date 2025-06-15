@@ -1,7 +1,9 @@
+This project was built for Lovable X Roam Hackathon: [Link to devpost submission](https://devpost.com/software/gitbuddy-8feigv) <br/>
+Deployed Link: [Gitbuddy Website](https://gitbuddy-dev.lovable.app/)
+
 ## Overview
 
 Gitbuddy is a Next.js application built with TypeScript, and Shadcn UI, leveraging Tailwind CSS for styling.  It features a user interface for interacting with GitHub repositories, allowing users to analyze repository structure, fetch file contents, and generate READMEs and Dockerfiles using Google's Gemini AI via a Supabase Edge Function. Authentication is handled through GitHub OAuth using Supabase.
-
 
 ## Setup
 
@@ -9,12 +11,12 @@ This project requires Node.js and npm (or yarn/pnpm) to be installed.  It's reco
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/0xadityaa/gitbuddy-dev
+   git clone https://github.com/0xadityaa/Gitbuddy
    ```
 
 2. **Navigate to the project directory:**
    ```bash
-   cd gitbuddy-dev
+   cd Gitbuddy
    ```
 
 3. **Install dependencies:**
@@ -47,18 +49,17 @@ GEMINI_API_KEY=YOUR_GEMINI_API_KEY # Your Google Gemini API key
 - Repository selection from authenticated user's GitHub account.
 - Repository directory structure visualization.
 - Fetching and display of file contents from selected repository.
-- README.md generation using Google's Gemini AI.
-- Dockerfile and docker-compose.yml generation using Google's Gemini AI.
-- Copy to clipboard functionality for generated content and directory structures.
+- README.md generation using Google's Gemini-2.5-flash.
+- Dockerfile and docker-compose.yml generation using Google's Gemini-2.5-pro.
 - Error handling and user feedback via toasts.
 - Responsive design using Tailwind CSS.
 
 
 ## Tech Stack
 
-- **Frontend:** React, Vite, TypeScript, Shadcn UI, Tailwind CSS, React Router DOM, React Hook Form, TanStack Query
+- **Frontend:** Nextjs, TypeScript, Shadcn UI, Tailwind CSS, React Router DOM, React Hook Form, TanStack Query
 - **Backend (Edge Functions):** Supabase, Google Gemini AI
-- **Styling:** Tailwind CSS
+- **Styling:** Tailwind CSS, ShadCn UI
 
 
 ## Usage
