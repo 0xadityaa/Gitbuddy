@@ -1,6 +1,6 @@
 ## Overview
 
-This project is a React application built with Vite, TypeScript, and Shadcn UI, leveraging Tailwind CSS for styling.  It features a user interface for interacting with GitHub repositories, allowing users to analyze repository structure, fetch file contents, and generate READMEs and Dockerfiles using Google's Gemini AI via a Supabase Edge Function. Authentication is handled through GitHub OAuth using Supabase.
+Gitbuddy is a Next.js application built with TypeScript, and Shadcn UI, leveraging Tailwind CSS for styling.  It features a user interface for interacting with GitHub repositories, allowing users to analyze repository structure, fetch file contents, and generate READMEs and Dockerfiles using Google's Gemini AI via a Supabase Edge Function. Authentication is handled through GitHub OAuth using Supabase.
 
 
 ## Setup
@@ -84,4 +84,4 @@ GEMINI_API_KEY=YOUR_GEMINI_API_KEY # Your Google Gemini API key
 
 ## License
 
-MIT License.  See the `LICENSE` file for details.
+MIT License.
